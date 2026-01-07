@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- <html lang="en" data-theme="metervara" data-theme-mode="light" data-cursor="metervara"> -->
+<html lang="en" data-theme="metervara" data-theme-mode="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metervara</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono:wght@400&display=swap"
+    />
+    <style>
+      :root[data-theme="metervara"] {
+        --mv-color-bg: transparent;
+        --mv-color-fg: transparent;
+        --mv-color-accent-1-bg: transparent;
+        --mv-color-accent-1-fg: transparent;
+        --mv-color-accent-2-bg: transparent;
+        --mv-color-accent-2-fg: transparent;
+        --mv-color-accent-3-bg: transparent;
+        --mv-color-accent-3-fg: transparent;
+        --mv-link-color: transparent;
+        --mv-color-dash-1: transparent;
+        --mv-color-dash-2: transparent;
+        /* breaks transitions, but fixes initial transition when loading page. Find a solution that solves both*/
+        --mv-transition-duration: 0s;
+      }
+    </style>
+  </head>
+  <body data-cursor-scope>
+    <div id="app" class="app">
+      <div id="content" class="content">
+        <header>
+          <h1>Welcome to Metervara.</h1>
+        </header>
+        <svg
+          class="zigzag"
+          viewBox="0 0 400 20"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern
+              id="zig-pattern-1"
+              patternUnits="userSpaceOnUse"
+              width="40"
+              height="20"
+            >
+              <polygon points="0,10 20,0 20,10 0,20" class="zig" />
+              <polygon points="20,0 40,10 40,20 20,10" class="zag" />
+            </pattern>
+          </defs>
+          <rect width="400" height="20" fill="url(#zig-pattern-1)" />
+        </svg>
+        <main>
+          <section>
+            <p>
+              I'm <mark>Patrik</mark>, a Copenhagen-based designer and developer
+              crafting delightful digital experiences. I'm passionate about
+              <mark>real-time</mark> visuals, graphics
+              <mark>programming</mark> and the occasional
+              <mark>physics</mark> simulation.
+            </p>
+            <p>
+              I love the fun, the <a href="#" target="_blank">whimsical</a> and
+              the
+              <a
+                data-portal="eye-watching-portal"
+                data-portal-inline="#eye"
+                data-portal-size="300px"
+                href="javascript:void(0)"
+                >unexpected</a
+              >, and thrive in making <mark>interactions</mark> feel just right.
+            </p>
+          </section>
+          <section>
+            <h2 class="eyebrow">Metervara?</h2>
+            <p>
+              <mark>Metervara</mark> is the Swedish word for items sold
+              <i>by the meter</i>.
+            </p>
+            <p>
+              I picked the handle up at design school, where it came to reflect,
+              for me, a way of thinking about design: the blend between bespoke
+              and mass-produced, between handmade and machine-made.
+            </p>
+          </section>
+          <section>
+            <h2 class="eyebrow">In practice.</h2>
+            <p>
+              I'm a partner at
+              <a href="https://manyone.com" target="_blank">Manyone</a>,
+              responsible for the <mark>development</mark> practice and its
+              relationship to <mark>design</mark>.
+            </p>
+            <p>
+              Beyond that, I explore ideas through
+              <a href="#" target="_blank">quick sketching</a>, build
+              <a href="#" target="_blank">playful side projects</a> from time to
+              time, and contribute to
+              <a href="#" target="_blank">work culture</a> at our studio.
+            </p>
+          </section>
+        </main>
+        <svg
+          class="zigzag"
+          viewBox="0 0 400 20"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern
+              id="zig-pattern-2"
+              patternUnits="userSpaceOnUse"
+              width="40"
+              height="20"
+            >
+              <polygon points="0,10 20,0 20,10 0,20" class="zig" />
+              <polygon points="20,0 40,10 40,20 20,10" class="zag" />
+            </pattern>
+          </defs>
+          <rect width="400" height="20" fill="url(#zig-pattern-2)" />
+        </svg>
+        <footer>
+          <p>© Metervara, Copenhagen.</p>
+        </footer>
+      </div>
+    </div>
+    <div id="eye" class="portal-content-eye" data-portal-region="main" style="display: none">
+      <div class="eye-container full-size">
+        <div class="pupil">
+          <div class="pupil-shape"></div>
+          <div class="highlight"></div>
+        </div>
+        <div class="eyelid top">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polygon class="eyelid-top" fill="magenta" stroke="none"/>
+          </svg>
+        </div>
+        <div class="eyelid bottom">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polygon class="eyelid-bottom" fill="brown" stroke="none"/>
+          </svg>
+        </div>
+      </div>
+      <!-- <div class="safe-area">
+        <div>
+          <h2>Watching.</h2>
+          <p>
+            Do an eye here, following the mouse. blinking.
+          </p>
+        </div>
+      </div> -->
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

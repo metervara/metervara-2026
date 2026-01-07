@@ -1,0 +1,23 @@
+{
+  "name": "metervara-2026",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": "25.2.1",
+    "npm": "11.6.2"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@metervara/dom-portal": "github:metervara/dom-portal#v1.3.3",
+    "@metervara/metervara-styles": "github:metervara/metervara-styles.git#v1.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "7.2.6"
+  }
+}

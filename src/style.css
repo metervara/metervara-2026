@@ -1,0 +1,96 @@
+@import "@metervara/metervara-styles/css/index.css";
+
+
+:root {
+  --pupil-size: 35%;
+  --pupil-posX: 0px;
+  --pupil-posY: 0px;
+  --pupil-scale: 1;
+  
+  --highlight-size: 40%;
+  --highlight-posX: 0px;
+  --highlight-posY: 0px;
+  --highlight-offset-amount: 50%;
+}
+
+body{
+  position: relative;
+}
+
+.app {
+  position: relative;
+}
+
+.content {
+  position: relative;
+  background-color: var(--mv-color-bg);
+  transition: background-color var(--mv-transition-duration) var(--mv-transition-timing-function);
+}
+
+/* hot-fix for zigzag to be visible when portal is open */
+svg.zigzag {
+  visibility: visible !important;
+}
+
+.metervara-portal {
+  --portal-transition-duration: 500ms;
+  /* --portal-transition-ease: cubic-bezier(0.5, 0.0, 0.5, 1.0); */
+  --portal-transition-ease: cubic-bezier(0.5, 0.0, 0.3, 1.0);
+  /* --portal-transition-ease: ease; */
+  --portal-transition-delay: 0ms;
+}
+
+/*
+.portal-content-eye .bg {
+  background-color: red;
+}
+*/
+
+.portal-content-eye .eye-container {
+  background-color: red;
+}
+
+.portal-content-eye .pupil {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: var(--pupil-size);
+  height: var(--pupil-size);
+  transform-origin: center;
+  transform: translate(var(--pupil-posX), var(--pupil-posY));
+}
+
+.portal-content-eye  .pupil-shape {
+  position: absolute;
+  inset: 0;
+  background: black;
+  border-radius: 100%;
+  transform: scale(var(--pupil-scale));
+}
+
+.portal-content-eye .highlight {
+  position: absolute;
+  top: calc(var(--highlight-posY) * var(--highlight-offset-amount));
+  left: calc(var(--highlight-posX) * var(--highlight-offset-amount));
+  width: var(--highlight-size);
+  height: var(--highlight-size);
+  background: white;
+  border-radius: 100%;
+  transform-origin: center;
+}
+
+.portal-content-eye .eyelid {
+  position: absolute;
+  width: 100%;
+  height:100%;
+  left: 0;
+  top: 0;
+}
+
+.portal-content-eye .eyelid.bottom {
+  transform: scaleY(-1);
+}
+
+.metervara-portal-border.top {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
