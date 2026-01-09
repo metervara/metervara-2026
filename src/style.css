@@ -6,11 +6,20 @@
   --pupil-posX: 0px;
   --pupil-posY: 0px;
   --pupil-scale: 1;
+
+  /* Eyelid gradient stops */
+  --eyelid-top-stop-center: var(--mv-color-dash-2);
+  --eyelid-top-stop-edge: var(--mv-color-dash-1);
+  --eyelid-bottom-stop-center: var(--mv-color-dash-2);
+  --eyelid-bottom-stop-edge: var(--mv-color-dash-1);
   
   --highlight-size: 40%;
   --highlight-posX: 0px;
   --highlight-posY: 0px;
   --highlight-offset-amount: 50%;
+
+  --eye-shadow-color: rgba(0, 0, 80, 1);
+  --eye-edge-color: var(--mv-color-dash-2); /* #d1bd7b; */
 }
 
 body{
@@ -47,7 +56,8 @@ svg.zigzag {
 */
 
 .portal-content-eye .eye-container {
-  background-color: red;
+  background-color: var(--mv-color-bg);
+  background-image: radial-gradient(circle at 50% 50%, var(--mv-color-bg) 40%, var(--eye-edge-color) 120%);
 }
 
 .portal-content-eye .pupil {
@@ -85,12 +95,40 @@ svg.zigzag {
   height:100%;
   left: 0;
   top: 0;
+  /* filter: drop-shadow( 0 0 2px var(--eye-shadow-color)); */
 }
 
 .portal-content-eye .eyelid.bottom {
   transform: scaleY(-1);
 }
 
-.metervara-portal-border.top {
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+/* Eyelid gradient styling moved from inline SVG */
+#eyelid-gradient-top stop.stop-0 {
+  stop-color: var(--eyelid-top-stop-center);
 }
+
+#eyelid-gradient-top stop.stop-1 {
+  stop-color: var(--eyelid-top-stop-edge);
+}
+
+#eyelid-gradient-bottom stop.stop-0 {
+  stop-color: var(--eyelid-bottom-stop-center);
+}
+
+#eyelid-gradient-bottom stop.stop-1 {
+  stop-color: var(--eyelid-bottom-stop-edge);
+}
+
+.metervara-portal-border.top {
+  box-shadow: inset 0 0 20px var(--eye-shadow-color);
+}
+
+/* .eyelid-top {
+  fill: var(--mv-color-dash-2);
+  stroke: none;
+}
+
+.eyelid-bottom {
+  fill: var(--mv-color-dash-1);
+  stroke: none;
+} */

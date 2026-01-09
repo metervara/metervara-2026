@@ -70,6 +70,7 @@
               <a
                 data-portal="eye-watching-portal"
                 data-portal-inline="#eye"
+                data-portal-inline-mode="move"
                 data-portal-size="300px"
                 href="javascript:void(0)"
                 >unexpected</a
@@ -129,20 +130,60 @@
         </footer>
       </div>
     </div>
-    <div id="eye" class="portal-content-eye" data-portal-region="main" style="display: none">
+    <div
+      id="eye"
+      class="portal-content-eye"
+      data-portal-region="main"
+      hidden
+    >
       <div class="eye-container full-size">
         <div class="pupil">
           <div class="pupil-shape"></div>
           <div class="highlight"></div>
         </div>
+        <!-- TODO: USe single svg with both patsh inside. So we can reuse defs/gradient-->
         <div class="eyelid top">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polygon class="eyelid-top" fill="magenta" stroke="none"/>
+            <defs>
+              <radialGradient
+                id="eyelid-gradient-top"
+                cx="50"
+                cy="50"
+                r="100"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0.2" class="stop-0" />
+                <stop offset="0.75" class="stop-1" />
+              </radialGradient>
+            </defs>
+            <path
+              class="eyelid-top"
+              d="M 0,0 L 100,0 L 100,50 L 0,50 Z"
+              stroke="none"
+              fill="url(#eyelid-gradient-top)"
+            />
           </svg>
         </div>
         <div class="eyelid bottom">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polygon class="eyelid-bottom" fill="brown" stroke="none"/>
+            <defs>
+              <radialGradient
+                id="eyelid-gradient-bottom"
+                cx="50"
+                cy="50"
+                r="100"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0.2" class="stop-0" />
+                <stop offset="0.75" class="stop-1" />
+              </radialGradient>
+            </defs>
+            <path
+              class="eyelid-bottom"
+              d="M 0,0 L 100,0 L 100,50 L 0,50 Z"
+              stroke="none"   
+              fill="url(#eyelid-gradient-bottom)"
+            />
           </svg>
         </div>
       </div>

@@ -4,18 +4,23 @@
 import { createTweenManager, easings } from './tween';
 import { clampToDiamond, lerp } from './utils';
 
+const BLINK_DURATION = 300;
 const BLINK_INTERVAL_MIN = 1000;
 const BLINK_INTERVAL_MAX = 3000;
 
-const EYELID_MIN = 10;
-const EYELID_MIN_OFFSET = 25;
-const EYELID_MAX_OFFSET = 50;
+const EYELID_MIN = 20;
+const EYELID_GAZE_OFFSET = 25;
+const EYELID_SQUINT_OFFSET = 15;
+
+const BLINK_OFF_CENTER = 10;
+
+type Point = { x: number; y: number };
 
 // EYELID POINTS
 // Point 3 is the moving point
 // When y is 0 it is open
 // When y is 50 it is closed
-const points = [
+const points: Point[] = [
   { x: 0,   y: 0 },
   { x: 100, y: 0 },
   { x: 100, y: 50 },
@@ -23,18 +28,42 @@ const points = [
   { x: 0,   y: 50 }
 ];
 
+// Straight-line path builder (matches the previous polygon shape)
+const buildEyelidPath = (p: Point[]) => {
+  const handleLength = 25;
+  const [p0, p1, p2, p3, p4] = p;
+  const h0 = { x: p2.x, y: p2.y };
+  const h1 = { x: p3.x + handleLength, y: p3.y };
+
+  const h2 = { x: p3.x - handleLength, y: p3.y };
+  const h3 = { x: p4.x, y: p4.y };
+  
+  // check if any value is NaN or otherwise invalid
+  // if (isNaN(p0.x) || isNaN(p0.y) || isNaN(p1.x) || isNaN(p1.y) || isNaN(p2.x) || isNaN(p2.y) || isNaN(p3.x) || isNaN(p3.y) || isNaN(p4.x) || isNaN(p4.y)) {
+  //   console.error('Invalid points', p);
+  //   return '';
+  // }
+  return `M ${p0.x},${p0.y}` +
+         `L ${p1.x},${p1.y} ` +
+         `L ${p2.x},${p2.y} ` +
+         `C ${h0.x},${h0.y} ${h1.x}, ${h1.y} ${p3.x},${p3.y}` + 
+         `C ${h2.x},${h2.y} ${h3.x}, ${h3.y} ${p4.x},${p4.y}` +
+         `Z`;
+};
+
 export const createEye = (_target: HTMLElement) => {
   // console.log('create eye', target)
   const target = _target;
   const pupil = target.querySelector('.pupil') as HTMLElement;
   const highlight = pupil.querySelector('.highlight') as HTMLElement;
-  const topEyelid = target.querySelector('.eyelid-top') as SVGPolygonElement  ;
-  const bottomEyelid = target.querySelector('.eyelid-bottom') as SVGPolygonElement;
+  const topEyelid = target.querySelector('.eyelid-top') as SVGPathElement;
+  const bottomEyelid = target.querySelector('.eyelid-bottom') as SVGPathElement;
 
   const idlePosition = {x: 0, y: 0};
   const eyePosition = {x: 0, y: 0};
   const mousePosition = {x: 0, y: 0};
   let followPosition = {x: 1, y: 1};
+  let eyeClamp: number = 1000;
 
   let requestAnimationFrameId: number | null = null;
   let followIdleTimeout: number | null = null;
@@ -48,7 +77,7 @@ export const createEye = (_target: HTMLElement) => {
   
   const transitions = createTweenManager();
 
-  const blinkValue = transitions.createValue(0, {
+  const blinkValue = transitions.createValue(0.5, {
     // onStart: () => {
     //   console.log('blink start');
     // },
@@ -59,7 +88,7 @@ export const createEye = (_target: HTMLElement) => {
       }, Math.random() * (BLINK_INTERVAL_MAX - BLINK_INTERVAL_MIN) + BLINK_INTERVAL_MIN);
     },
     easing: easings.easeInOutQuad,
-    defaultDurationMs: 500,
+    defaultDurationMs: BLINK_DURATION,
   });
   const squintValue = transitions.createValue(0, {
     easing: easings.easeOutQuad,
@@ -67,7 +96,7 @@ export const createEye = (_target: HTMLElement) => {
   });
   const followValue = transitions.createValue(0, {
     easing: easings.easeOutQuad,
-    defaultDurationMs: 200,
+    defaultDurationMs: 300,
   });
 
   const scheduleFollowIdle = () => {
@@ -90,6 +119,7 @@ export const createEye = (_target: HTMLElement) => {
   const handleResize = () => {
     eyeRect = target.getBoundingClientRect(); 
     pupilRect = pupil.getBoundingClientRect();
+    eyeClamp = (eyeRect.height * 0.5) * 0.6;
   }
 
   const hasValidRects = () => (
@@ -123,6 +153,7 @@ export const createEye = (_target: HTMLElement) => {
     followPosition.y *= 0.3;
     // diamond clamp
     followPosition = clampToDiamond(followPosition, currentEyeRect.width);
+    followPosition.y = Math.max(-eyeClamp,  Math.min(eyeClamp, followPosition.y));
 
     //IDLE POSITION
 
@@ -133,7 +164,9 @@ export const createEye = (_target: HTMLElement) => {
     const normalizedEyePosition = {x: eyePosition.x / (currentEyeRect.width * 0.5), y: eyePosition.y / (currentEyeRect.height * 0.5) };
 
     //GAZE & squint
-    const gazeOffset = normalizedEyePosition.y * lerp(EYELID_MIN_OFFSET, EYELID_MAX_OFFSET, squintValue.get());
+    // const gazeOffset = normalizedEyePosition.y * lerp(EYELID_MIN_OFFSET, EYELID_SQUINT_OFFSET, squintValue.get());
+    const gazeOffset = normalizedEyePosition.y * EYELID_GAZE_OFFSET;
+    const squintOffset = squintValue.get() * EYELID_SQUINT_OFFSET;
 
     // SQUINT
     //BLINK 
@@ -150,21 +183,14 @@ export const createEye = (_target: HTMLElement) => {
     highlight.style.setProperty('--highlight-posY', `${-normalizedEyePosition.y}`);
 
     // Move eyelids (blink and squint)
-    const offcenterAmount = 20;
     // points[3].y = blinkProgress * (50 + offcenterAmount); // Adjust for gaze
-    points[3].y = lerp(Math.max(EYELID_MIN, EYELID_MIN_OFFSET + gazeOffset), 50 + offcenterAmount, blinkProgress); // Adjust for gaze
-    let eyelidPoints = points
-      .map(p => `${p.x},${p.y}`)
-      .join(" ");
-    topEyelid.setAttribute('points', eyelidPoints);
+    points[3].y = lerp(Math.max(EYELID_MIN, EYELID_GAZE_OFFSET + gazeOffset + squintOffset), 50 + BLINK_OFF_CENTER, blinkProgress); // Adjust for gaze
+    topEyelid.setAttribute('d', buildEyelidPath(points));
 
     // points[3].y = blinkProgress * (50 - offcenterAmount); // Adjust for gaze
-    points[3].y = lerp(Math.max(EYELID_MIN, EYELID_MIN_OFFSET - gazeOffset), 50 - offcenterAmount, blinkProgress); // Adjust for gaze
+    points[3].y = lerp(Math.max(EYELID_MIN, EYELID_GAZE_OFFSET - gazeOffset + squintOffset), 50 - BLINK_OFF_CENTER, blinkProgress); // Adjust for gaze
 
-    eyelidPoints = points
-      .map(p => `${p.x},${p.y}`)
-      .join(" ");
-    bottomEyelid.setAttribute('points', eyelidPoints);
+    bottomEyelid.setAttribute('d', buildEyelidPath(points));
   
     requestAnimationFrameId = requestAnimationFrame(update);
   }
@@ -176,7 +202,9 @@ export const createEye = (_target: HTMLElement) => {
 
   handleResize();
   requestAnimationFrameId = requestAnimationFrame(update);
-  blinkValue.to(1);
+  blinkTimeout = window.setTimeout(() => {
+    blinkValue.to(1, { durationMs: BLINK_DURATION });
+  }, 500);
   
   return {
     destroy: () => {
