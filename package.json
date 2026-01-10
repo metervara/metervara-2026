@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@metervara/dom-portal": "github:metervara/dom-portal#v1.3.4",
-    "@metervara/metervara-styles": "github:metervara/metervara-styles.git#v1.0.2"
+    "@metervara/metervara-styles": "github:metervara/metervara-styles.git#v1.0.5"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
