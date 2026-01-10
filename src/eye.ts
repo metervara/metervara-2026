@@ -18,13 +18,24 @@ const FOLLOW_SCALE = 0.25;
 
 const IDLE_MOVE_INTERVAL_MIN = 1300;
 const IDLE_MOVE_INTERVAL_MAX = 3000;
-const IDLE_MOVE_RANGE_RATIO = 0.22; // relative to eye width (diamond-clamped)
+const IDLE_MOVE_RANGE_RATIO = 0.3; // relative to eye width (diamond-clamped)
 const IDLE_MOVE_DURATION = 450;
 
 const IDLE_JITTER_INTERVAL_MIN = 300;
 const IDLE_JITTER_INTERVAL_MAX = 520;
 const IDLE_JITTER_RANGE_RATIO = 0.025; // relative to eye width
 const IDLE_JITTER_DURATION = 200;
+
+const SEQUENCE_INTERVAL_MIN = 8000;
+const SEQUENCE_INTERVAL_MAX = 14000;
+const SEQUENCE_LOOK_OFFSET_RATIO = 0.35; // relative to eye width
+const SEQUENCE_LOOK_DURATION = 450;
+const SEQUENCE_LOOK_HOLD = 1500;
+const SEQUENCE_CENTER_HOLD = 900;
+const SEQUENCE_SQUINT_TARGET = 0.75;
+const SEQUENCE_SQUINT_DURATION = 420;
+const SEQUENCE_RECOVER_DURATION = 320;
+const SEQUENCE_FOLLOW_THRESHOLD = 0.15;
 
 type Point = { x: number; y: number };
 
@@ -81,7 +92,10 @@ export const createEye = (_target: HTMLElement) => {
   let followIdleTimeout: number | null = null;
   let idleMoveTimeout: number | null = null;
   let idleJitterTimeout: number | null = null;
+  let sequenceTimeout: number | null = null;
+  let sequenceStepTimeout: number | null = null;
   let blinkTimeout: number | null = null;
+  let sequenceActive = false;
 
   let eyeRect: DOMRect | null = null;
   // let eyeCenterX: number;
@@ -133,6 +147,7 @@ export const createEye = (_target: HTMLElement) => {
 
   const getIdleBaseRange = () => (eyeRect ? eyeRect.width * IDLE_MOVE_RANGE_RATIO : 0);
   const getIdleJitterRange = () => (eyeRect ? eyeRect.width * IDLE_JITTER_RANGE_RATIO : 0);
+  const getSequenceOffset = () => (eyeRect ? eyeRect.width * SEQUENCE_LOOK_OFFSET_RATIO : 0);
 
   const buildRandomTarget = (range: number) => {
     if (!eyeRect) return { x: 0, y: 0 };
@@ -181,6 +196,121 @@ export const createEye = (_target: HTMLElement) => {
     }, delay);
   };
 
+  const clearIdleTimers = () => {
+    if (idleMoveTimeout !== null) {
+      clearTimeout(idleMoveTimeout);
+      idleMoveTimeout = null;
+    }
+    if (idleJitterTimeout !== null) {
+      clearTimeout(idleJitterTimeout);
+      idleJitterTimeout = null;
+    }
+  };
+
+  const clearSequenceTimers = () => {
+    if (sequenceTimeout !== null) {
+      clearTimeout(sequenceTimeout);
+      sequenceTimeout = null;
+    }
+    if (sequenceStepTimeout !== null) {
+      clearTimeout(sequenceStepTimeout);
+      sequenceStepTimeout = null;
+    }
+  };
+
+  const scheduleSequence = (delayOverride?: number) => {
+    clearSequenceTimers();
+    const delay = delayOverride ?? randomInRange(SEQUENCE_INTERVAL_MIN, SEQUENCE_INTERVAL_MAX);
+    sequenceTimeout = window.setTimeout(() => {
+      tryStartSequence();
+    }, delay);
+  };
+
+  const cancelActiveSequence = () => {
+    if (!sequenceActive) return;
+    clearSequenceTimers();
+    sequenceActive = false;
+    moveIdleTo(0, 0, SEQUENCE_RECOVER_DURATION);
+    squintValue.to(0, { durationMs: SEQUENCE_RECOVER_DURATION });
+    setIdleTarget();
+    setIdleJitter();
+    scheduleIdleMove();
+    scheduleIdleJitter();
+    scheduleSequence();
+  };
+
+  const moveIdleTo = (x: number, y: number, durationMs = SEQUENCE_LOOK_DURATION) => {
+    idleTargetX.to(x, { durationMs });
+    idleTargetY.to(y, { durationMs });
+    idleJitterX.to(0, { durationMs: durationMs * 0.6 });
+    idleJitterY.to(0, { durationMs: durationMs * 0.6 });
+  };
+
+  const tryStartSequence = () => {
+    if (sequenceActive) return;
+    // Defer if the eye is currently following the mouse
+    if (followValue.get() > SEQUENCE_FOLLOW_THRESHOLD) {
+      scheduleSequence(1200);
+      return;
+    }
+    runSquintSequence();
+  };
+
+  const runSquintSequence = () => {
+    sequenceActive = true;
+    clearIdleTimers();
+    clearSequenceTimers();
+
+    const ensureGeom = () => {
+      if (!hasValidRects()) {
+        handleResize();
+      }
+      return hasValidRects();
+    };
+    if (!ensureGeom()) {
+      scheduleSequence();
+      return;
+    }
+
+    const offset = getSequenceOffset();
+    const left = clampToDiamond({ x: -offset, y: 0 }, offset * 2);
+    const right = clampToDiamond({ x: offset, y: 0 }, offset * 2);
+
+    squintValue.to(SEQUENCE_SQUINT_TARGET, { durationMs: SEQUENCE_SQUINT_DURATION });
+    moveIdleTo(0, 0, SEQUENCE_SQUINT_DURATION);
+
+    let step = 0;
+    const stepRunner = () => {
+      step += 1;
+      switch (step) {
+        case 1:
+          // hold center while squinting (already squinting), then go left
+          sequenceStepTimeout = window.setTimeout(() => {
+            moveIdleTo(left.x, left.y, SEQUENCE_LOOK_DURATION);
+            sequenceStepTimeout = window.setTimeout(stepRunner, SEQUENCE_LOOK_HOLD);
+          }, SEQUENCE_CENTER_HOLD);
+          break;
+        case 2:
+          // then go right
+          moveIdleTo(right.x, right.y, SEQUENCE_LOOK_DURATION);
+          sequenceStepTimeout = window.setTimeout(stepRunner, SEQUENCE_LOOK_HOLD);
+          break;
+        default:
+          moveIdleTo(0, 0, SEQUENCE_RECOVER_DURATION);
+          squintValue.to(0, { durationMs: SEQUENCE_RECOVER_DURATION });
+          setIdleTarget();
+          setIdleJitter();
+          scheduleIdleMove();
+          scheduleIdleJitter();
+          sequenceActive = false;
+          scheduleSequence();
+          break;
+      }
+    };
+
+    sequenceStepTimeout = window.setTimeout(stepRunner, SEQUENCE_SQUINT_DURATION + 80);
+  };
+
   const scheduleFollowIdle = () => {
     if (followIdleTimeout !== null) {
       clearTimeout(followIdleTimeout);
@@ -194,6 +324,7 @@ export const createEye = (_target: HTMLElement) => {
   const handleMouseMove = (_e: MouseEvent) => {
     mousePosition.x = _e.clientX;
     mousePosition.y = _e.clientY;
+    cancelActiveSequence();
     followValue.to(1);
     scheduleFollowIdle();
   };
@@ -295,6 +426,7 @@ export const createEye = (_target: HTMLElement) => {
   setIdleJitter();
   scheduleIdleMove();
   scheduleIdleJitter();
+  scheduleSequence();
   requestAnimationFrameId = requestAnimationFrame(update);
   blinkTimeout = window.setTimeout(() => {
     blinkValue.to(1, { durationMs: BLINK_DURATION });
@@ -321,6 +453,14 @@ export const createEye = (_target: HTMLElement) => {
       if (idleJitterTimeout !== null) {
         clearTimeout(idleJitterTimeout);
         idleJitterTimeout = null;
+      }
+      if (sequenceTimeout !== null) {
+        clearTimeout(sequenceTimeout);
+        sequenceTimeout = null;
+      }
+      if (sequenceStepTimeout !== null) {
+        clearTimeout(sequenceStepTimeout);
+        sequenceStepTimeout = null;
       }
       if (blinkTimeout !== null) {
         clearTimeout(blinkTimeout);
