@@ -14,6 +14,8 @@ const EYELID_SQUINT_OFFSET = 15;
 
 const BLINK_OFF_CENTER = 10;
 
+const FOLLOW_SCALE = 0.25;
+
 type Point = { x: number; y: number };
 
 // EYELID POINTS
@@ -149,8 +151,8 @@ export const createEye = (_target: HTMLElement) => {
     followPosition.x = mousePosition.x - (currentEyeRect.left + currentEyeRect.width / 2);
     followPosition.y = mousePosition.y - (currentEyeRect.top + currentEyeRect.height / 2);
     // Scale down
-    followPosition.x *= 0.3;
-    followPosition.y *= 0.3;
+    followPosition.x *= FOLLOW_SCALE;
+    followPosition.y *= FOLLOW_SCALE;
     // diamond clamp
     followPosition = clampToDiamond(followPosition, currentEyeRect.width);
     followPosition.y = Math.max(-eyeClamp,  Math.min(eyeClamp, followPosition.y));
