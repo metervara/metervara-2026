@@ -16,6 +16,16 @@ const BLINK_OFF_CENTER = 10;
 
 const FOLLOW_SCALE = 0.25;
 
+const IDLE_MOVE_INTERVAL_MIN = 1300;
+const IDLE_MOVE_INTERVAL_MAX = 3000;
+const IDLE_MOVE_RANGE_RATIO = 0.22; // relative to eye width (diamond-clamped)
+const IDLE_MOVE_DURATION = 450;
+
+const IDLE_JITTER_INTERVAL_MIN = 300;
+const IDLE_JITTER_INTERVAL_MAX = 520;
+const IDLE_JITTER_RANGE_RATIO = 0.025; // relative to eye width
+const IDLE_JITTER_DURATION = 200;
+
 type Point = { x: number; y: number };
 
 // EYELID POINTS
@@ -69,6 +79,8 @@ export const createEye = (_target: HTMLElement) => {
 
   let requestAnimationFrameId: number | null = null;
   let followIdleTimeout: number | null = null;
+  let idleMoveTimeout: number | null = null;
+  let idleJitterTimeout: number | null = null;
   let blinkTimeout: number | null = null;
 
   let eyeRect: DOMRect | null = null;
@@ -100,6 +112,74 @@ export const createEye = (_target: HTMLElement) => {
     easing: easings.easeOutQuad,
     defaultDurationMs: 300,
   });
+  const idleTargetX = transitions.createValue(0, {
+    easing: easings.easeInOutQuad,
+    defaultDurationMs: IDLE_MOVE_DURATION,
+  });
+  const idleTargetY = transitions.createValue(0, {
+    easing: easings.easeInOutQuad,
+    defaultDurationMs: IDLE_MOVE_DURATION,
+  });
+  const idleJitterX = transitions.createValue(0, {
+    easing: easings.easeOutQuad,
+    defaultDurationMs: IDLE_JITTER_DURATION,
+  });
+  const idleJitterY = transitions.createValue(0, {
+    easing: easings.easeOutQuad,
+    defaultDurationMs: IDLE_JITTER_DURATION,
+  });
+
+  const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+  const getIdleBaseRange = () => (eyeRect ? eyeRect.width * IDLE_MOVE_RANGE_RATIO : 0);
+  const getIdleJitterRange = () => (eyeRect ? eyeRect.width * IDLE_JITTER_RANGE_RATIO : 0);
+
+  const buildRandomTarget = (range: number) => {
+    if (!eyeRect) return { x: 0, y: 0 };
+    const raw = {
+      x: (Math.random() * 2 - 1) * range,
+      y: (Math.random() * 2 - 1) * range,
+    };
+    const diamond = clampToDiamond(raw, range * 2);
+    const clampedY = Math.max(-eyeClamp, Math.min(eyeClamp, diamond.y));
+    return { x: diamond.x, y: clampedY };
+  };
+
+  const setIdleTarget = () => {
+    const baseRange = getIdleBaseRange();
+    const next = buildRandomTarget(baseRange);
+    idleTargetX.to(next.x);
+    idleTargetY.to(next.y);
+  };
+
+  const setIdleJitter = () => {
+    const jitterRange = getIdleJitterRange();
+    const next = buildRandomTarget(jitterRange);
+    idleJitterX.to(next.x);
+    idleJitterY.to(next.y);
+  };
+
+  const scheduleIdleMove = () => {
+    if (idleMoveTimeout !== null) {
+      clearTimeout(idleMoveTimeout);
+    }
+    const delay = randomInRange(IDLE_MOVE_INTERVAL_MIN, IDLE_MOVE_INTERVAL_MAX);
+    idleMoveTimeout = window.setTimeout(() => {
+      setIdleTarget();
+      scheduleIdleMove();
+    }, delay);
+  };
+
+  const scheduleIdleJitter = () => {
+    if (idleJitterTimeout !== null) {
+      clearTimeout(idleJitterTimeout);
+    }
+    const delay = randomInRange(IDLE_JITTER_INTERVAL_MIN, IDLE_JITTER_INTERVAL_MAX);
+    idleJitterTimeout = window.setTimeout(() => {
+      setIdleJitter();
+      scheduleIdleJitter();
+    }, delay);
+  };
 
   const scheduleFollowIdle = () => {
     if (followIdleTimeout !== null) {
@@ -158,6 +238,14 @@ export const createEye = (_target: HTMLElement) => {
     followPosition.y = Math.max(-eyeClamp,  Math.min(eyeClamp, followPosition.y));
 
     //IDLE POSITION
+    const idleRange = getIdleBaseRange();
+    const jitterRange = getIdleJitterRange();
+    const combinedIdle = clampToDiamond(
+      { x: idleTargetX.get() + idleJitterX.get(), y: idleTargetY.get() + idleJitterY.get() },
+      (idleRange + jitterRange) * 2 || currentEyeRect.width,
+    );
+    idlePosition.x = combinedIdle.x;
+    idlePosition.y = Math.max(-eyeClamp, Math.min(eyeClamp, combinedIdle.y));
 
     //FINAL EYE POSITION
     // Interpolate between idle and follow positions
@@ -203,6 +291,10 @@ export const createEye = (_target: HTMLElement) => {
   window.addEventListener('scroll', handleResize, { passive: true });
 
   handleResize();
+  setIdleTarget();
+  setIdleJitter();
+  scheduleIdleMove();
+  scheduleIdleJitter();
   requestAnimationFrameId = requestAnimationFrame(update);
   blinkTimeout = window.setTimeout(() => {
     blinkValue.to(1, { durationMs: BLINK_DURATION });
@@ -221,6 +313,14 @@ export const createEye = (_target: HTMLElement) => {
       if (followIdleTimeout !== null) {
         clearTimeout(followIdleTimeout);
         followIdleTimeout = null;
+      }
+      if (idleMoveTimeout !== null) {
+        clearTimeout(idleMoveTimeout);
+        idleMoveTimeout = null;
+      }
+      if (idleJitterTimeout !== null) {
+        clearTimeout(idleJitterTimeout);
+        idleJitterTimeout = null;
       }
       if (blinkTimeout !== null) {
         clearTimeout(blinkTimeout);
