@@ -13,8 +13,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@metervara/dom-portal": "github:metervara/dom-portal#v1.4.0",
-    "@metervara/metervara-styles": "github:metervara/metervara-styles.git#v1.0.5"
+    "@metervara/dom-portal": "github:metervara/dom-portal#v1.5.0-alpha.3",
+    "@metervara/metervara-styles": "github:metervara/metervara-styles.git#v1.0.6"
   },
   "devDependencies": {
     "typescript": "^5.2.2",

@@ -4,7 +4,11 @@
 html,
 body {
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: 100lvh;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 :root {
@@ -28,8 +32,9 @@ body {
   --eye-edge-color: var(--mv-color-dash-2); /* #d1bd7b; */
 }
 
-body{
+body {
   position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll from portal animation */
 }
 
 .app {
@@ -49,21 +54,13 @@ svg.zigzag {
 
 .metervara-portal {
   --portal-transition-duration: 500ms;
-  /* --portal-transition-ease: cubic-bezier(0.5, 0.0, 0.5, 1.0); */
   --portal-transition-ease: cubic-bezier(0.5, 0.0, 0.3, 1.0);
-  /* --portal-transition-ease: ease; */
   --portal-transition-delay: 0ms;
 }
 
-/*
-.portal-content-eye .bg {
-  background-color: red;
-}
-*/
-
 .portal-content-eye .eye-container {
-  background-color: var(--mv-color-bg);
-  background-image: radial-gradient(circle at 50% 50%, var(--mv-color-bg) 40%, var(--eye-edge-color) 120%);
+  background-color: var(--mv-metervara-color-bg-light);
+  background-image: radial-gradient(circle at 50% 50%, var(--mv-metervara-color-bg-light) 40%, var(--eye-edge-color) 120%);
 }
 
 .portal-content-eye .pupil {
@@ -76,7 +73,7 @@ svg.zigzag {
   transform: translate(var(--pupil-posX), var(--pupil-posY));
 }
 
-.portal-content-eye  .pupil-shape {
+.portal-content-eye .pupil-shape {
   position: absolute;
   inset: 0;
   background: black;
@@ -98,17 +95,15 @@ svg.zigzag {
 .portal-content-eye .eyelid {
   position: absolute;
   width: 100%;
-  height:100%;
+  height: 100%;
   left: 0;
   top: 0;
-  /* filter: drop-shadow( 0 0 2px var(--eye-shadow-color)); */
 }
 
 .portal-content-eye .eyelid.bottom {
   transform: scaleY(-1);
 }
 
-/* Eyelid gradient styling moved from inline SVG */
 #eyelid-gradient-top stop.stop-0 {
   stop-color: var(--eyelid-top-stop-center);
 }
@@ -129,12 +124,7 @@ svg.zigzag {
   box-shadow: inset 0 0 20px var(--eye-shadow-color);
 }
 
-/* .eyelid-top {
-  fill: var(--mv-color-dash-2);
-  stroke: none;
+/* Fix: prevent overflow:hidden from clipping the closing animation */
+.metervara-portal:not(.open) {
+  overflow: visible;
 }
-
-.eyelid-bottom {
-  fill: var(--mv-color-dash-1);
-  stroke: none;
-} */
