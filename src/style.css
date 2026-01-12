@@ -1,11 +1,12 @@
 @import "@metervara/metervara-styles/css/index.css";
 
-:root,
-html,
-body {
-  min-height: 100vh;
-  min-height: 100lvh;
-}
+/* :root, html, body {
+  min-height: 100%;
+} 
+
+@supports (height: 100svh) {
+  :root, html, body { min-height: 100svh; }
+} */
 
 html {
   overflow-x: hidden;
